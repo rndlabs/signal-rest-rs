@@ -1,6 +1,5 @@
 use clap::Parser;
 use directories::ProjectDirs;
-use env_logger::Env;
 use crate::arguments::Args;
 use signal_service::SignalServiceWrapper;
 use tokio::sync::mpsc;
@@ -9,15 +8,17 @@ pub mod arguments;
 pub mod service;
 pub mod relayer;
 pub mod signal_service;
+pub mod logging;
 
 #[tokio::main]
 async fn main() {
-    env_logger::from_env(
-        Env::default().default_filter_or(format!("{}=warn", env!("CARGO_PKG_NAME"))),
-    )
-    .init();
-
     let args = Args::parse();
+
+    logging::initialize(
+        args.logging.log_filter.as_str(),
+        args.logging.log_stderr_threshold,
+    );
+
     let db_path = args.db_path.unwrap_or_else(|| {
         ProjectDirs::from("org", "whisperfish", "presage")
             .unwrap()

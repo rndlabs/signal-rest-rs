@@ -3,6 +3,8 @@ use std::net::{Ipv4Addr, SocketAddr};
 use axum::{routing, Router, Server};
 
 use hyper::Error;
+use tower_http::{trace::{TraceLayer, DefaultOnRequest, DefaultMakeSpan, DefaultOnResponse}, LatencyUnit};
+use tracing::Level;
 use crate::relayer;
 use tokio::sync::mpsc;
 use utoipa::{
@@ -55,7 +57,22 @@ pub async fn start(rx: mpsc::UnboundedSender<(String, String)>) -> Result<(), Er
             "/message/:destination",
             routing::post(relayer::send),
         )
-        .with_state(rx);
+        .with_state(rx)
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(
+                    DefaultMakeSpan::new().include_headers(true)
+                )
+                .on_request(
+                    DefaultOnRequest::new().level(Level::INFO)
+                )
+                .on_response(
+                    DefaultOnResponse::new()
+                        .level(Level::INFO)
+                        .latency_unit(LatencyUnit::Micros)
+                )
+                // on so on for `on_eos`, `on_body_chunk`, and `on_failure`
+        );
 
     let address = SocketAddr::from((Ipv4Addr::UNSPECIFIED, 8080));
     Server::bind(&address).serve(app.into_make_service()).await

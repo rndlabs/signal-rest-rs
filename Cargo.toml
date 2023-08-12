@@ -11,25 +11,32 @@ authors = ["mfw78 <mfw78@rndlabs.xyz>"]
 anyhow = "1.0"
 base64 = "0.21.2"
 chrono = { version = "0.4", default-features = false, features = ["serde", "clock"] }
-clap = { version = ">=4.2.4", features = ["derive"] }
+clap = { version = "4.3.0", features = ["derive", "env"] }
 directories = "5.0.1"
-env_logger = "0.10.0"
 futures = "0.3"
 hex = "0.4"
-log = "0.4"
 mime_guess = "2.0"
 tempfile = "3.3"
 axum = { version = "0.6.20", features = ["macros"] }
 hyper = { version = "0.14.27", features = ["full"] }
 tokio = { version = "1.30.0", features = ["full"] }
 tower = "0.4.13"
+tower-http = { version = "0.4.3", features = ["trace"] }
 qr2term = { version = "0.3.1" }
 notify-rust = "4.6.0"
 url = "2.2"
 
+## misc
+tracing = "0.1.37"
+tracing-subscriber = { version = "0.3.17", features = ["env-filter", "ansi", "fmt", "std", "json", "time"] }
+atty = "0.2.14"
+time = { version = "0.3.21", features = ["macros"] }
+
+# presage (signal library)
 presage = { git = "https://github.com/MarcusGrass/presage", branch = "registration-fixes-completion" }
 presage-store-sled = { git = "https://github.com/MarcusGrass/presage", branch = "registration-fixes-completion" }
 
+# rest api
 utoipa = { version = "3.4.4", features = ["axum_extras"] }
 utoipa-swagger-ui = { version = "3.1.5", features = ["axum"] }
 utoipa-redoc = { version = "0.1.0", features = ["axum"] }

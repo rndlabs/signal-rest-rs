@@ -10,9 +10,14 @@ use presage::{
 };
 use presage::libsignal_service::prelude::ProfileKey;
 
+use crate::logging::LoggingArguments;
+
 #[derive(Parser)]
 #[clap(about = "a basic signal CLI to try things out")]
 pub struct Args {
+    #[clap(flatten)]
+    pub logging: LoggingArguments,
+
     #[clap(long = "db-path", short = 'd', group = "store")]
     pub db_path: Option<PathBuf>,
 

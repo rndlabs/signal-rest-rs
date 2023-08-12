@@ -5,7 +5,6 @@ use std::time::Duration;
 use anyhow::Context;
 use chrono::Local;
 use futures::{pin_mut, StreamExt};
-use log::{error, info};
 use notify_rust::Notification;
 use presage::prelude::content::Reaction;
 use presage::prelude::proto::data_message::Quote;
@@ -17,6 +16,7 @@ use presage_store_sled::{SledStore, MigrationConflictStrategy};
 use tempfile::Builder;
 use tokio::fs;
 use tokio::{sync::mpsc, task, time::sleep};
+use tracing::{error, info, warn};
 
 pub type Queue = mpsc::UnboundedSender<(String, String)>;
 pub type QueueReceiver = mpsc::UnboundedReceiver<(String, String)>;
@@ -119,7 +119,7 @@ impl SignalServiceWrapper {
         if let ContentBody::DataMessage(DataMessage { attachments, .. }) = &content.body {
             for attachment_pointer in attachments {
                 let Ok(attachment_data) = manager.get_attachment(attachment_pointer).await else {
-                    log::warn!("failed to fetch attachment");
+                    warn!("failed to fetch attachment");
                     continue;
                 };
 
@@ -152,7 +152,7 @@ impl SignalServiceWrapper {
         content: &Content,
     ) {
         let Ok(thread) = Thread::try_from(content) else {
-            log::warn!("failed to derive thread from content");
+            warn!("failed to derive thread from content");
             return;
         };
     
@@ -176,12 +176,12 @@ impl SignalServiceWrapper {
                 ..
             } => {
                 let Ok(Some(message)) = manager.message(thread, *timestamp) else {
-                    log::warn!("no message in {thread} sent at {timestamp}");
+                    warn!("no message in {thread} sent at {timestamp}");
                     return None;
                 };
     
                 let ContentBody::DataMessage(DataMessage { body: Some(body), .. }) = message.body else {
-                    log::warn!("message reacted to has no body");
+                    warn!("message reacted to has no body");
                     return None;
                 };
     
@@ -236,7 +236,7 @@ impl SignalServiceWrapper {
             ContentBody::CallMessage(_) => Some(Msg::Received(&thread, "is calling!".into())),
             ContentBody::TypingMessage(_) => Some(Msg::Received(&thread, "is typing...".into())),
             c => {
-                log::warn!("unsupported message {c:?}");
+                warn!("unsupported message {c:?}");
                 None
             }
         } {
@@ -270,7 +270,7 @@ impl SignalServiceWrapper {
                     .icon("presage")
                     .show()
                 {
-                    log::error!("failed to display desktop notification: {e}");
+                    error!("failed to display desktop notification: {e}");
                 }
             }
         }
