@@ -1,0 +1,30 @@
+[package]
+name = "signal-bot-rest"
+version = "0.1.0"
+edition = "2021"
+authors = ["mfw78 <mfw78@rndlabs.xyz>"]
+
+[patch.crates-io]
+"curve25519-dalek" = { git = 'https://github.com/signalapp/curve25519-dalek', branch = 'lizard2' }
+
+[dependencies]
+anyhow = "1.0"
+base64 = "0.21.2"
+chrono = { version = "0.4", default-features = false, features = ["serde", "clock"] }
+clap = { version = ">=4.2.4", features = ["derive"] }
+directories = "5.0.1"
+env_logger = "0.10.0"
+futures = "0.3"
+hex = "0.4"
+log = "0.4"
+mime_guess = "2.0"
+tempfile = "3.3"
+tokio = { version = "1.0", features = ["macros", "rt-multi-thread", "io-std", "io-util"] }
+qr2term = { version = "0.3.1" }
+notify-rust = "4.6.0"
+url = "2.2"
+presage = { git = "https://github.com/MarcusGrass/presage", branch = "registration-fixes-completion" }
+presage-store-sled = { git = "https://github.com/MarcusGrass/presage", branch = "registration-fixes-completion" }
+
+[features]
+quirks = []
