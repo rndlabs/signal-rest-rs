@@ -1,5 +1,5 @@
 use std::path::Path;
-use std::{path::PathBuf, time::UNIX_EPOCH};
+use std::time::UNIX_EPOCH;
 
 use std::time::Duration;
 use anyhow::Context;
@@ -12,7 +12,6 @@ use presage::prelude::proto::sync_message::Sent;
 use presage::{Store, Thread};
 use presage::prelude::{Content, SyncMessage};
 use presage::{Registered, Manager, prelude::{ContentBody, DataMessage, Uuid}};
-use presage_store_sled::{SledStore, MigrationConflictStrategy};
 use tempfile::Builder;
 use tokio::fs;
 use tokio::{sync::mpsc, task, time::sleep};
@@ -21,17 +20,16 @@ use tracing::{error, info, warn};
 pub type Queue = mpsc::UnboundedSender<(String, String)>;
 pub type QueueReceiver = mpsc::UnboundedReceiver<(String, String)>;
 
-pub struct SignalServiceWrapper {
+pub struct SignalServiceWrapper<C: Store + 'static> {
     queue: QueueReceiver,
-    db_path: PathBuf,
-    passphrase: Option<String>,
+    config_store: C,
     // Put other persistent data here
 }
 
-impl SignalServiceWrapper {
-    pub fn new (db_path: PathBuf, passphrase: Option<String>, queue: QueueReceiver) -> Self {
+impl<C: Store + 'static> SignalServiceWrapper<C> {
+    pub fn new(queue: QueueReceiver, config_store: C) -> Self {
         // Initialize members here
-        Self { queue, db_path, passphrase }
+        Self { queue, config_store }
     }
 
     pub async fn run(mut self) {
@@ -44,13 +42,7 @@ impl SignalServiceWrapper {
         // Spawn and run a new task here that will process the request.
         // Use a new runtime for this task, and make sure it all runs in the same thread
         // despite any await
-
-        let config_store = SledStore::open_with_passphrase(
-            self.db_path.clone(),
-            self.passphrase.clone(),
-            MigrationConflictStrategy::Raise,
-        ).expect("failed to open config database");
-        let mut manager = Manager::load_registered(config_store).await.unwrap();
+        let mut manager = Manager::load_registered(self.config_store.clone()).await.unwrap();
 
         let destination = Uuid::parse_str(req.0.as_str()).unwrap();
 
@@ -81,7 +73,7 @@ impl SignalServiceWrapper {
 
     }
 
-    async fn receive<C: Store>(
+    async fn receive(
         manager: &mut Manager<C, Registered>,
         notifications: bool,
     ) -> anyhow::Result<()> {
@@ -107,7 +99,7 @@ impl SignalServiceWrapper {
 
     // Note to developers, this is a good example of a function you can use as a source of inspiration
     // to process incoming messages.
-    async fn process_incoming_message<C: Store>(
+    async fn process_incoming_message(
         manager: &mut Manager<C, Registered>,
         attachments_tmp_dir: &Path,
         notifications: bool,
@@ -146,7 +138,7 @@ impl SignalServiceWrapper {
         }
     }
 
-    fn print_message<C: Store>(
+    fn print_message(
         manager: &Manager<C, Registered>,
         notifications: bool,
         content: &Content,
