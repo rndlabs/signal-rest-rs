@@ -13,7 +13,7 @@ use presage::libsignal_service::prelude::ProfileKey;
 use crate::logging::LoggingArguments;
 
 #[derive(Parser)]
-#[clap(about = "a basic signal CLI to try things out")]
+#[clap(about = "A Rest API to Signal relayer")]
 pub struct Args {
     #[clap(flatten)]
     pub logging: LoggingArguments,
